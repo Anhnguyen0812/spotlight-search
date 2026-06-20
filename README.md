@@ -4,6 +4,8 @@ A sleek, macOS-style Spotlight Search bar for your browser. Quickly search and s
 
 Designed for power users, developers, and anyone who navigates dozens of open tabs.
 
+![Spotlight Search Preview](images/ver1.1.png)
+
 ---
 
 ## ✨ Features
@@ -42,19 +44,27 @@ Designed for power users, developers, and anyone who navigates dozens of open ta
 
 ## 🚀 Installation (Local / Developer Mode)
 
-Since the extension code is fully open-source, you can load it directly into any Chromium-based browser (Edge, Chrome, Brave, Opera, etc.):
+Since the extension code is fully open-source, you can load it directly into any Chromium-based browser (Edge, Chrome, Brave, Opera, etc.) using one of the following options:
 
-1. Clone or download this repository to your local machine:
+### Option 1: Download from Releases (Recommended & Easiest)
+1. Go to the [Releases](https://github.com/Anhnguyen0812/spotlight-search/releases) page of this repository.
+2. Download the latest `spotlight-search.zip` file.
+3. Extract the ZIP file to a folder on your computer.
+
+### Option 2: Clone the Repository via Git
+1. Clone this repository to your local machine:
    ```bash
-   git clone https://github.com/your-username/spotlight-search-tab-finder.git
+   git clone https://github.com/Anhnguyen0812/spotlight-search.git
    ```
-2. Open your browser and navigate to the Extensions page:
+
+### Loading the Extension into your Browser
+1. Open your browser and navigate to the Extensions page:
    - **Chrome**: `chrome://extensions`
    - **Edge**: `edge://extensions`
-3. Turn on **Developer mode** (typically a toggle switch in the bottom-left or top-right).
-4. Click **Load unpacked** (Tải tiện ích đã giải nén).
-5. Select the root folder `spotlight_extension` (the directory containing `manifest.json`).
-6. Press `Ctrl + Q` on any standard webpage to start searching!
+2. Turn on **Developer mode** (typically a toggle switch in the sidebar or top-right).
+3. Click **Load unpacked** (Tải tiện ích đã giải nén).
+4. Select the extracted folder containing the `manifest.json` file.
+5. Press `Ctrl + Q` on any standard webpage to start searching!
 
 > [!NOTE]
 > Extensions cannot run on browser internal system pages (like `chrome://` or `edge://` settings) or the Chrome Web Store due to browser security restrictions.
