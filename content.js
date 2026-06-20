@@ -60,6 +60,7 @@
   let lastMouseX = 0;
   let lastMouseY = 0;
   let isKeyboardNavigating = false;
+  let ignoreMouseEvents = false;
 
   // ----------------------------------------------------------
   // 3.5 Tab Classification System
@@ -333,6 +334,9 @@
     resultsContainer.innerHTML = "";
     currentResults = [];
     selectedIndex = -1;
+    ignoreMouseEvents = true;
+    lastMouseX = 0;
+    lastMouseY = 0;
 
     const tabsToRender = query
       ? allTabs.filter(
@@ -470,7 +474,7 @@
     // Event listeners
     item.addEventListener("click", () => switchToTab(tab));
     item.addEventListener("mouseenter", () => {
-      if (isKeyboardNavigating) return;
+      if (isKeyboardNavigating || ignoreMouseEvents) return;
       setSelected(index);
     });
 
@@ -516,7 +520,7 @@
 
     item.addEventListener("click", () => searchGoogle(query));
     item.addEventListener("mouseenter", () => {
-      if (isKeyboardNavigating) return;
+      if (isKeyboardNavigating || ignoreMouseEvents) return;
       setSelected(idx);
     });
 
@@ -536,6 +540,10 @@
     currentResults = currentResults.filter((r) => r.type !== "suggestion");
 
     if (suggestions.length === 0) return;
+
+    ignoreMouseEvents = true;
+    lastMouseX = 0;
+    lastMouseY = 0;
 
     const section = document.createElement("div");
     section.className = "spotlight-section spotlight-section-suggestions";
@@ -572,7 +580,7 @@
 
       item.addEventListener("click", () => searchGoogle(s));
       item.addEventListener("mouseenter", () => {
-        if (isKeyboardNavigating) return;
+        if (isKeyboardNavigating || ignoreMouseEvents) return;
         setSelected(idx);
       });
 
@@ -751,11 +759,25 @@
   document.addEventListener(
     "mousemove",
     (e) => {
-      // Reset keyboard navigation status only when mouse physically moves (coordinates change)
+      // Reset keyboard navigation status and ignoreMouseEvents only when mouse physically moves (coordinates change)
       if (e.clientX !== lastMouseX || e.clientY !== lastMouseY) {
-        isKeyboardNavigating = false;
+        const wasReset = (lastMouseX === 0 && lastMouseY === 0);
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
+
+        if (!wasReset) {
+          isKeyboardNavigating = false;
+          ignoreMouseEvents = false;
+
+          // If the mouse is hovering over an item, select it
+          const itemEl = e.target.closest(".spotlight-item");
+          if (itemEl) {
+            const index = parseInt(itemEl.dataset.index, 10);
+            if (!isNaN(index) && selectedIndex !== index) {
+              setSelected(index);
+            }
+          }
+        }
       }
 
       if (!isDragging || gestureTriggered) return;
