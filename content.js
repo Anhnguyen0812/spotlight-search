@@ -7,11 +7,11 @@
 (function () {
   "use strict";
 
-  // Tránh inject trùng lặp
+  // Avoid duplicate injection
   if (document.getElementById("edge-spotlight-search-root")) return;
 
   // ----------------------------------------------------------
-  // 1. Tạo cấu trúc DOM
+  // 1. Create DOM structure
   // ----------------------------------------------------------
   const root = document.createElement("div");
   root.id = "edge-spotlight-search-root";
@@ -42,7 +42,7 @@
   document.documentElement.appendChild(root);
 
   // ----------------------------------------------------------
-  // 2. Tham chiếu các phần tử
+  // 2. Reference elements
   // ----------------------------------------------------------
   const backdrop = root.querySelector(".spotlight-backdrop");
   const input = root.querySelector(".spotlight-input");
@@ -52,11 +52,11 @@
   // 3. State
   // ----------------------------------------------------------
   let allTabs = [];
-  let currentResults = []; // { type, data } array hiện tại
+  let currentResults = []; // Current active results array: { type, data, element }
   let selectedIndex = -1;
   let suggestDebounceTimer = null;
 
-  // Track chuột để tránh nhảy tiêu điểm khi dùng phím mũi tên cuộn danh sách
+  // Track mouse position to prevent focus jumping when scrolling via arrow keys
   let lastMouseX = 0;
   let lastMouseY = 0;
   let isKeyboardNavigating = false;
@@ -209,7 +209,7 @@
     },
   };
 
-  // Thứ tự ưu tiên hiển thị
+  // Order of category display priority
   const CATEGORY_ORDER = [
     "document",
     "media",
@@ -223,7 +223,7 @@
   function classifyTab(tab) {
     const url = tab.url || "";
     for (const [key, cat] of Object.entries(CATEGORIES)) {
-      if (key === "web") continue; // skip fallback
+      if (key === "web") continue; // Skip generic fallback
       if (cat.patterns.some((p) => p.test(url))) return key;
     }
     return "web";
@@ -240,7 +240,7 @@
   }
 
   // ----------------------------------------------------------
-  // 4. Tự động phát hiện Dark/Light theme
+  // 4. Automatic Dark/Light theme detection
   // ----------------------------------------------------------
   function detectTheme() {
     const prefersDark = window.matchMedia(
@@ -254,28 +254,28 @@
     .addEventListener("change", detectTheme);
 
   // ----------------------------------------------------------
-  // 5. Hàm mở / đóng Spotlight
+  // 5. Open / Close Spotlight popup
   // ----------------------------------------------------------
   function openSpotlight() {
     root.classList.add("active");
     selectedIndex = -1;
     isKeyboardNavigating = false;
     setTimeout(() => input.focus(), 60);
-    // Thông báo background: spotlight đã mở (single-instance)
+    // Notify background: spotlight opened (for single-instance management)
     chrome.runtime.sendMessage({ action: "spotlight-opened" });
-    // Lấy danh sách tab khi mở
+    // Retrieve tabs list on open
     fetchTabs();
   }
 
   function closeSpotlight() {
-    if (!root.classList.contains("active")) return; // tránh gửi message thừa
+    if (!root.classList.contains("active")) return; // Avoid redundant messages
     root.classList.remove("active");
     input.value = "";
     input.blur();
     resultsContainer.innerHTML = "";
     currentResults = [];
     selectedIndex = -1;
-    // Thông báo background: spotlight đã đóng
+    // Notify background: spotlight closed
     chrome.runtime.sendMessage({ action: "spotlight-closed" });
   }
 
@@ -288,7 +288,7 @@
   }
 
   // ----------------------------------------------------------
-  // 6. Lấy danh sách tab từ Background
+  // 6. Retrieve tab list from background
   // ----------------------------------------------------------
   function fetchTabs() {
     chrome.runtime.sendMessage({ action: "get-tabs" }, (response) => {
@@ -300,7 +300,7 @@
   }
 
   // ----------------------------------------------------------
-  // 7. Lấy Google Suggestions
+  // 7. Fetch suggestions from Google Suggest API
   // ----------------------------------------------------------
   function fetchSuggestions(query) {
     chrome.runtime.sendMessage(
@@ -326,7 +326,7 @@
   }
 
   // ----------------------------------------------------------
-  // 8. Render kết quả
+  // 8. Render results
   // ----------------------------------------------------------
   function renderResults(query) {
     clearTimeout(suggestDebounceTimer);
@@ -342,7 +342,7 @@
         )
       : allTabs;
 
-    // Nhóm tab theo category và render từng nhóm
+    // Group tabs by category and render each group
     if (tabsToRender.length > 0) {
       const groups = groupTabsByCategory(tabsToRender);
       CATEGORY_ORDER.forEach((catKey) => {
@@ -352,9 +352,9 @@
       });
     }
 
-    // Nếu có query → hiển thị Search Google + suggestions
+    // If query is present → show Search Google option and trigger suggestions
     if (query) {
-      // Khi không tìm thấy tab nào → hiện thông báo
+      // Show empty state if no tabs match the query
       if (tabsToRender.length === 0) {
         renderEmptyState(query);
       }
@@ -364,7 +364,7 @@
       }, 200);
     }
 
-    // Tự động chọn item đầu tiên
+    // Auto-select the first result item
     if (currentResults.length > 0) {
       setSelected(0);
     }
@@ -461,13 +461,13 @@
 
     item.appendChild(textWrap);
 
-    // Category badge bên phải
+    // Category badge on the right
     const badge = document.createElement("span");
     badge.className = `spotlight-item-badge ${cat.badgeClass}`;
     badge.textContent = cat.badge;
     item.appendChild(badge);
 
-    // Sự kiện
+    // Event listeners
     item.addEventListener("click", () => switchToTab(tab));
     item.addEventListener("mouseenter", () => {
       if (isKeyboardNavigating) return;
@@ -526,13 +526,13 @@
   }
 
   function renderGoogleSuggestions(originalQuery, suggestions) {
-    // Xóa section suggestions cũ (nếu có)
+    // Remove old suggestions section if present
     const old = resultsContainer.querySelector(
       ".spotlight-section-suggestions",
     );
     if (old) old.remove();
 
-    // Xóa các items cũ thuộc type 'suggestion' khỏi currentResults
+    // Filter out old suggestion items from currentResults
     currentResults = currentResults.filter((r) => r.type !== "suggestion");
 
     if (suggestions.length === 0) return;
@@ -581,7 +581,7 @@
     });
 
     resultsContainer.appendChild(section);
-    // Re-index tất cả
+    // Re-index all results
     reindexResults();
   }
 
@@ -595,7 +595,7 @@
   // 9. Selection & Navigation
   // ----------------------------------------------------------
   function setSelected(index) {
-    // Xóa selected cũ
+    // Clear previously selected item class
     const prev = resultsContainer.querySelector(".spotlight-item.selected");
     if (prev) prev.classList.remove("selected");
 
@@ -603,7 +603,7 @@
     if (index >= 0 && index < currentResults.length) {
       const el = currentResults[index].element;
       el.classList.add("selected");
-      // Scroll into view nếu cần
+      // Scroll item into view if necessary
       el.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }
@@ -624,7 +624,7 @@
 
   function executeSelected() {
     if (selectedIndex < 0 || selectedIndex >= currentResults.length) {
-      // Không có gì được chọn → search Google với query hiện tại
+      // No item selected → perform Google search with current query
       const query = input.value.trim();
       if (query) searchGoogle(query);
       return;
@@ -663,7 +663,7 @@
   }
 
   // ----------------------------------------------------------
-  // 11. Xử lý sự kiện bàn phím
+  // 11. Keyboard navigation event listener
   // ----------------------------------------------------------
   document.addEventListener(
     "keydown",
@@ -681,10 +681,10 @@
         return;
       }
 
-      // Các phím chỉ xử lý khi spotlight đang mở
+      // Key handlers active only when spotlight is opened
       if (!root.classList.contains("active")) return;
 
-      // Escape — Đóng
+      // Escape — Close
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
@@ -692,7 +692,7 @@
         return;
       }
 
-      // Arrow keys — Điều hướng
+      // Arrow keys — Navigation
       if (e.key === "ArrowDown") {
         isKeyboardNavigating = true;
         e.preventDefault();
@@ -708,7 +708,7 @@
         return;
       }
 
-      // Enter — Thực thi lựa chọn
+      // Enter — Execute selection
       if (e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
@@ -720,7 +720,7 @@
   );
 
   // ----------------------------------------------------------
-  // 12. Xử lý input — lọc kết quả
+  // 12. Input event handler — filter results
   // ----------------------------------------------------------
   input.addEventListener("input", () => {
     const query = input.value.trim();
@@ -728,7 +728,7 @@
   });
 
   // ----------------------------------------------------------
-  // 13. Cơ chế kích hoạt bằng Chuột (kéo xuống)
+  // 13. Mouse Drag Activation Gesture (drag down)
   // ----------------------------------------------------------
   const DRAG_THRESHOLD = 80;
   let isDragging = false;
@@ -739,7 +739,7 @@
     "mousedown",
     (e) => {
       if (root.classList.contains("active")) return;
-      // Chỉ chuột phải (button === 2), không dùng chuột trái vì trùng bôi đen/kéo
+      // Right-click only (button === 2) to avoid conflict with text selection or left-click dragging
       if (e.button !== 2) return;
       isDragging = true;
       gestureTriggered = false;
@@ -751,7 +751,7 @@
   document.addEventListener(
     "mousemove",
     (e) => {
-      // Chỉ reset trạng thái bàn phím khi chuột thực sự di chuyển (thay đổi tọa độ)
+      // Reset keyboard navigation status only when mouse physically moves (coordinates change)
       if (e.clientX !== lastMouseX || e.clientY !== lastMouseY) {
         isKeyboardNavigating = false;
         lastMouseX = e.clientX;
@@ -789,7 +789,7 @@
   );
 
   // ----------------------------------------------------------
-  // 14. Click backdrop để đóng
+  // 14. Click backdrop to close
   // ----------------------------------------------------------
   backdrop.addEventListener("click", () => closeSpotlight());
 
@@ -798,13 +798,13 @@
   });
 
   // ----------------------------------------------------------
-  // 15. Lắng nghe message từ Background
+  // 15. Listen for messages from background service worker
   // ----------------------------------------------------------
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.action === "toggle-spotlight") {
       toggleSpotlight();
     }
-    // Background yêu cầu đóng (single-instance: chuyển tab)
+    // Background requests closing (single-instance management: tab switched)
     if (message?.action === "close-spotlight") {
       closeSpotlight();
     }

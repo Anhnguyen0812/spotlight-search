@@ -1,38 +1,38 @@
 // ============================================================
 // Background Service Worker
-// Xử lý: phím tắt, click icon, query tabs, switch tab,
-// Google Suggestions, và single-instance management.
+// Handles: shortcuts, icon clicks, querying tabs, switching tabs,
+// Google Suggestions, and single-instance management.
 // ============================================================
 
-// Track tab nào đang mở spotlight (chỉ cho phép 1 instance)
+// Track which tab has spotlight open (only 1 instance allowed browser-wide)
 let spotlightActiveTabId = null;
 
-// Cache lưu trữ gợi ý tìm kiếm (tối đa 100 queries gần nhất)
+// Cache for storing search suggestions (maximum of 100 recent queries)
 const suggestionCache = new Map();
 const MAX_CACHE_SIZE = 100;
 
-// Bộ điều khiển hủy request fetch cũ khi có request mới
+// AbortController to cancel stale fetch requests when a new request is made
 let activeAbortController = null;
 
-// Khi người dùng nhấn phím tắt Ctrl+Q (manifest commands)
+// Triggered when user presses the Ctrl+Q shortcut (declared in manifest commands)
 chrome.commands.onCommand.addListener((command) => {
   if (command === "toggle-spotlight") {
     sendToggleMessage();
   }
 });
 
-// Khi người dùng click icon extension trên toolbar
+// Triggered when user clicks the extension icon on the toolbar
 chrome.action.onClicked.addListener(() => {
   sendToggleMessage();
 });
 
-// Gửi toggle message tới content script của tab đang active
+// Send toggle message to the content script of the active tab
 function sendToggleMessage() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]?.id) return;
     const currentTabId = tabs[0].id;
 
-    // Nếu spotlight đang mở ở tab KHÁC → đóng tab cũ trước
+    // If spotlight is open in a DIFFERENT tab → close the old one first
     if (
       spotlightActiveTabId !== null &&
       spotlightActiveTabId !== currentTabId
@@ -47,7 +47,7 @@ function sendToggleMessage() {
   });
 }
 
-// Khi người dùng chuyển tab → đóng spotlight ở tab cũ
+// When the active tab changes → close spotlight on the previously active tab
 chrome.tabs.onActivated.addListener((activeInfo) => {
   if (
     spotlightActiveTabId !== null &&
@@ -60,7 +60,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   }
 });
 
-// Khi tab bị đóng → cleanup
+// When a tab is closed → cleanup
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (spotlightActiveTabId === tabId) {
     spotlightActiveTabId = null;
@@ -68,23 +68,23 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 // ----------------------------------------------------------
-// Lắng nghe message từ content script
+// Listen for messages from content scripts
 // ----------------------------------------------------------
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
-    // Content script thông báo spotlight đã mở
+    // Content script notifies that spotlight has opened
     case "spotlight-opened":
       spotlightActiveTabId = sender.tab?.id ?? null;
       break;
 
-    // Content script thông báo spotlight đã đóng
+    // Content script notifies that spotlight has closed
     case "spotlight-closed":
       if (spotlightActiveTabId === sender.tab?.id) {
         spotlightActiveTabId = null;
       }
       break;
 
-    // Lấy danh sách toàn bộ tab đang mở
+    // Retrieve a list of all currently open tabs
     case "get-tabs":
       chrome.tabs.query({}, (tabs) => {
         const tabList = tabs.map((t) => ({
@@ -97,12 +97,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }));
         sendResponse({ tabs: tabList });
       });
-      return true; // giữ kênh mở cho async response
+      return true; // keep the message channel open for asynchronous response
 
-    // Chuyển đến tab được chọn
+    // Switch to the selected tab
     case "switch-tab":
       if (message.tabId && message.windowId) {
-        // Đóng spotlight trước khi chuyển
+        // Close spotlight before switching
         if (spotlightActiveTabId !== null) {
           chrome.tabs
             .sendMessage(spotlightActiveTabId, { action: "close-spotlight" })
@@ -115,19 +115,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       break;
 
-    // Lấy gợi ý tìm kiếm từ Google Suggest API (có tối ưu cache & abort request cũ)
+    // Fetch search suggestions from Google Suggest API (optimized with caching & request aborting)
     case "get-suggestions":
       if (message.query) {
         const query = message.query.trim().toLowerCase();
 
-        // 1. Kiểm tra Cache trước để phản hồi ngay lập tức
+        // 1. Check cache first for immediate response
         if (suggestionCache.has(query)) {
           const cachedSuggestions = suggestionCache.get(query);
           sendResponse({ suggestions: cachedSuggestions });
-          return false; // Phản hồi đồng bộ, không cần giữ cổng kết nối
+          return false; // Synchronous response, no need to keep channel open
         }
 
-        // 2. Hủy request đang chạy trước đó (nếu có) để tránh nghẽn/rate limit
+        // 2. Abort any previous running request to avoid congestion/rate limit
         if (activeAbortController) {
           activeAbortController.abort();
         }
@@ -137,6 +137,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const url1 = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`;
         const url2 = `https://www.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`;
 
+        // Helper function to perform fetch with AbortSignal
         const fetchSuggestions = (url) => {
           return fetch(url, { signal }).then((res) => {
             if (!res.ok) throw new Error(`Status ${res.status}`);
@@ -149,7 +150,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const suggestions = Array.isArray(data[1])
               ? data[1].slice(0, 5)
               : [];
-            // Lưu vào cache (giới hạn kích thước)
+            // Save to cache (evicting oldest if max size exceeded)
             if (suggestionCache.size >= MAX_CACHE_SIZE) {
               const firstKey = suggestionCache.keys().next().value;
               suggestionCache.delete(firstKey);
@@ -175,7 +176,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   ? data[1].slice(0, 5)
                   : [];
 
-                // Lưu vào cache
+                // Save to cache
                 if (suggestionCache.size >= MAX_CACHE_SIZE) {
                   const firstKey = suggestionCache.keys().next().value;
                   suggestionCache.delete(firstKey);
