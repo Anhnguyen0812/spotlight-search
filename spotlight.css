@@ -1,0 +1,517 @@
+/* ============================================================
+   Edge Spotlight Search - Quick Tab Finder — CSS
+   Giao diện giống macOS Spotlight.
+   Toàn bộ selector nằm dưới #edge-spotlight-search-root
+   ============================================================ */
+
+/* ---------- Reset & Isolation ---------- */
+#edge-spotlight-search-root,
+#edge-spotlight-search-root *,
+#edge-spotlight-search-root *::before,
+#edge-spotlight-search-root *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family:
+    -apple-system, "SF Pro Text", "Segoe UI Variable", "Segoe UI", system-ui,
+    BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  line-height: normal;
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Full-screen Overlay ---------- */
+#edge-spotlight-search-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 17vh;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+#edge-spotlight-search-root.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Backdrop */
+#edge-spotlight-search-root .spotlight-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease;
+}
+
+/* ============================================================
+   LIGHT THEME — Container
+   ============================================================ */
+#edge-spotlight-search-root .spotlight-container {
+  position: relative;
+  width: 680px;
+  max-width: calc(100vw - 40px);
+  border-radius: 14px;
+  overflow: hidden;
+
+  /* Acrylic / Glassmorphism */
+  background: rgba(246, 246, 246, 0.82);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+
+  /* Spotlight shadow */
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.22),
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 0 0 0.5px rgba(0, 0, 0, 0.08);
+
+  /* Animation */
+  transform: scale(0.97) translateY(-12px);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease;
+}
+
+#edge-spotlight-search-root.active .spotlight-container {
+  transform: scale(1) translateY(0);
+}
+
+/* ============================================================
+   Input Row
+   ============================================================ */
+#edge-spotlight-search-root .spotlight-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  height: 54px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Magnifying glass icon */
+#edge-spotlight-search-root .spotlight-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: rgba(0, 0, 0, 0.36);
+}
+
+/* Input */
+#edge-spotlight-search-root .spotlight-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 17px;
+  font-weight: 400;
+  color: #1d1d1f;
+  caret-color: #007aff;
+}
+
+#edge-spotlight-search-root .spotlight-input::placeholder {
+  color: rgba(0, 0, 0, 0.3);
+  font-weight: 400;
+}
+
+#edge-spotlight-search-root .spotlight-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Shortcut hint */
+#edge-spotlight-search-root .spotlight-shortcut {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  user-select: none;
+}
+
+#edge-spotlight-search-root .spotlight-shortcut kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.32);
+  background: rgba(0, 0, 0, 0.05);
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  line-height: 1;
+}
+
+#edge-spotlight-search-root .spotlight-shortcut-plus {
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.22);
+}
+
+/* ============================================================
+   Results Panel
+   ============================================================ */
+#edge-spotlight-search-root .spotlight-results {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+/* Custom scrollbar */
+#edge-spotlight-search-root .spotlight-results::-webkit-scrollbar {
+  width: 6px;
+}
+#edge-spotlight-search-root .spotlight-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+#edge-spotlight-search-root .spotlight-results::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+
+/* Section */
+#edge-spotlight-search-root .spotlight-section {
+  padding: 4px 0;
+}
+
+/* Section header — giống Spotlight */
+#edge-spotlight-search-root .spotlight-section-header {
+  padding: 8px 18px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#edge-spotlight-search-root .spotlight-section-icon {
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.32);
+}
+
+#edge-spotlight-search-root .spotlight-section-count {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 1px 6px;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+/* Result item */
+#edge-spotlight-search-root .spotlight-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 1px 8px;
+  transition: background 0.08s ease;
+  min-height: 44px;
+}
+
+#edge-spotlight-search-root .spotlight-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+#edge-spotlight-search-root .spotlight-item.selected {
+  background: #007aff;
+}
+
+#edge-spotlight-search-root .spotlight-item.selected .spotlight-item-title {
+  color: #fff;
+}
+
+#edge-spotlight-search-root .spotlight-item.selected .spotlight-item-url {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+#edge-spotlight-search-root .spotlight-item.selected .spotlight-item-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: transparent;
+}
+
+#edge-spotlight-search-root .spotlight-item.selected .spotlight-item-icon,
+#edge-spotlight-search-root .spotlight-item.selected .spotlight-google-icon,
+#edge-spotlight-search-root .spotlight-item.selected .spotlight-suggest-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Item icon (favicon) */
+#edge-spotlight-search-root .spotlight-item-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+#edge-spotlight-search-root .spotlight-google-icon,
+#edge-spotlight-search-root .spotlight-suggest-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* Item text block */
+#edge-spotlight-search-root .spotlight-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+#edge-spotlight-search-root .spotlight-item-title {
+  font-size: 14px;
+  font-weight: 400;
+  color: #1d1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#edge-spotlight-search-root .spotlight-item-url {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.36);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badge */
+#edge-spotlight-search-root .spotlight-item-badge {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.04);
+  border: 0.5px solid rgba(0, 0, 0, 0.06);
+  user-select: none;
+}
+
+#edge-spotlight-search-root .spotlight-badge-search {
+  color: #007aff;
+  background: rgba(0, 122, 255, 0.08);
+  border-color: rgba(0, 122, 255, 0.12);
+}
+
+#edge-spotlight-search-root .spotlight-badge-doc {
+  color: #e67e22;
+  background: rgba(230, 126, 34, 0.08);
+  border-color: rgba(230, 126, 34, 0.12);
+}
+
+#edge-spotlight-search-root .spotlight-badge-media {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.08);
+  border-color: rgba(231, 76, 60, 0.12);
+}
+
+#edge-spotlight-search-root .spotlight-badge-social {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.12);
+}
+
+#edge-spotlight-search-root .spotlight-badge-dev {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.12);
+}
+
+#edge-spotlight-search-root .spotlight-badge-mail {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.12);
+}
+
+#edge-spotlight-search-root .spotlight-badge-shop {
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.12);
+}
+
+/* Empty state */
+#edge-spotlight-search-root .spotlight-empty-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.36);
+}
+
+#edge-spotlight-search-root .spotlight-empty-msg svg {
+  flex-shrink: 0;
+  color: rgba(0, 0, 0, 0.22);
+}
+
+#edge-spotlight-search-root .spotlight-empty-msg strong {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Separator between input and results (only when results exist) */
+#edge-spotlight-search-root .spotlight-results:not(:empty) {
+  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 6px;
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+#edge-spotlight-search-root.dark .spotlight-backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+#edge-spotlight-search-root.dark .spotlight-container {
+  background: rgba(40, 40, 42, 0.82);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08);
+}
+
+#edge-spotlight-search-root.dark .spotlight-input-row {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+#edge-spotlight-search-root.dark .spotlight-icon {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+#edge-spotlight-search-root.dark .spotlight-input {
+  color: #f0f0f0;
+  caret-color: #0a84ff;
+}
+
+#edge-spotlight-search-root.dark .spotlight-input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+#edge-spotlight-search-root.dark .spotlight-shortcut kbd {
+  color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+#edge-spotlight-search-root.dark .spotlight-shortcut-plus {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+/* Dark results */
+#edge-spotlight-search-root.dark .spotlight-results::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#edge-spotlight-search-root.dark .spotlight-section-header {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+#edge-spotlight-search-root.dark .spotlight-section-icon {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+#edge-spotlight-search-root.dark .spotlight-section-count {
+  color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#edge-spotlight-search-root.dark .spotlight-empty-msg {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+#edge-spotlight-search-root.dark .spotlight-empty-msg svg {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+#edge-spotlight-search-root.dark .spotlight-empty-msg strong {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#edge-spotlight-search-root.dark .spotlight-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#edge-spotlight-search-root.dark .spotlight-item.selected {
+  background: #0a84ff;
+}
+
+#edge-spotlight-search-root.dark .spotlight-item-title {
+  color: #f0f0f0;
+}
+
+#edge-spotlight-search-root.dark .spotlight-item-url {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+#edge-spotlight-search-root.dark .spotlight-google-icon,
+#edge-spotlight-search-root.dark .spotlight-suggest-icon {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+#edge-spotlight-search-root.dark .spotlight-item-badge {
+  color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+#edge-spotlight-search-root.dark .spotlight-badge-search {
+  color: #0a84ff;
+  background: rgba(10, 132, 255, 0.12);
+  border-color: rgba(10, 132, 255, 0.18);
+}
+
+#edge-spotlight-search-root.dark .spotlight-results:not(:empty) {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Dark selected overrides */
+#edge-spotlight-search-root.dark
+  .spotlight-item.selected
+  .spotlight-item-title {
+  color: #fff;
+}
+
+#edge-spotlight-search-root.dark .spotlight-item.selected .spotlight-item-url {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#edge-spotlight-search-root.dark
+  .spotlight-item.selected
+  .spotlight-item-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: transparent;
+}
+
+#edge-spotlight-search-root.dark .spotlight-item.selected .spotlight-item-icon,
+#edge-spotlight-search-root.dark
+  .spotlight-item.selected
+  .spotlight-google-icon,
+#edge-spotlight-search-root.dark
+  .spotlight-item.selected
+  .spotlight-suggest-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
